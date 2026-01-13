@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
+	// "fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -250,18 +250,20 @@ func (a *App) showARPScanDialog() {
 	workersEntry.SetPlaceHolder("100")
 	workersEntry.SetText("100")
 
-	form := &widget.Form{
-		Items: []*widget.FormItem{
-			{Text: "Network CIDR:", Widget: cidrEntry},
-			{Text: "Workers:", Widget: workersEntry},
-		},
-		OnSubmit: func() {
-			cidr := cidrEntry.Text
-			a.scanARP(cidr)
-		},
+	items := []*widget.FormItem{
+		{Text: "Network CIDR:", Widget: cidrEntry},
+		{Text: "Workers:", Widget: workersEntry},
 	}
 
-	dialog.ShowForm("Scan Network (ARP)", "Scan", "Cancel", form.Items, form.OnSubmit, a.window)
+	onSubmit := func(b bool) {
+		if !b {
+			return // User clicked Cancel
+		}
+		cidr := cidrEntry.Text
+		a.scanARP(cidr)
+	}
+
+	dialog.ShowForm("Scan Network (ARP)", "Scan", "Cancel", items, onSubmit, a.window)
 }
 
 func (a *App) scanARP(cidr string) {
@@ -368,16 +370,18 @@ func (a *App) activateDevice() {
 	passwordEntry := widget.NewPasswordEntry()
 	passwordEntry.SetPlaceHolder("New password")
 
-	form := &widget.Form{
-		Items: []*widget.FormItem{
-			{Text: "Password:", Widget: passwordEntry},
-		},
-		OnSubmit: func() {
-			a.sendActivateCommand(passwordEntry.Text)
-		},
+	items := []*widget.FormItem{
+		{Text: "Password:", Widget: passwordEntry},
 	}
 
-	dialog.ShowForm("Activate Device", "Activate", "Cancel", form.Items, form.OnSubmit, a.window)
+	onSubmit := func(b bool) {
+		if !b {
+			return
+		}
+		a.sendActivateCommand(passwordEntry.Text)
+	}
+
+	dialog.ShowForm("Activate Device", "Activate", "Cancel", items, onSubmit, a.window)
 }
 
 func (a *App) sendActivateCommand(password string) {
@@ -428,21 +432,23 @@ func (a *App) showUpdateIPDialog() {
 	dhcpCheck := widget.NewCheck("Enable DHCP", nil)
 	dhcpCheck.Checked = dev.DHCP == "true"
 
-	form := &widget.Form{
-		Items: []*widget.FormItem{
-			{Text: "New IP:", Widget: ipEntry},
-			{Text: "Subnet Mask:", Widget: maskEntry},
-			{Text: "Gateway:", Widget: gatewayEntry},
-			{Text: "Port:", Widget: portEntry},
-			{Text: "DHCP:", Widget: dhcpCheck},
-			{Text: "Password:", Widget: passwordEntry},
-		},
-		OnSubmit: func() {
-			a.updateDeviceIP(ipEntry.Text, maskEntry.Text, gatewayEntry.Text, portEntry.Text, dhcpCheck.Checked, passwordEntry.Text)
-		},
+	items := []*widget.FormItem{
+		{Text: "New IP:", Widget: ipEntry},
+		{Text: "Subnet Mask:", Widget: maskEntry},
+		{Text: "Gateway:", Widget: gatewayEntry},
+		{Text: "Port:", Widget: portEntry},
+		{Text: "DHCP:", Widget: dhcpCheck},
+		{Text: "Password:", Widget: passwordEntry},
 	}
 
-	dialog.ShowForm("Update Device IP", "Update", "Cancel", form.Items, form.OnSubmit, a.window)
+	onSubmit := func(b bool) {
+		if !b {
+			return
+		}
+		a.updateDeviceIP(ipEntry.Text, maskEntry.Text, gatewayEntry.Text, portEntry.Text, dhcpCheck.Checked, passwordEntry.Text)
+	}
+
+	dialog.ShowForm("Update Device IP", "Update", "Cancel", items, onSubmit, a.window)
 }
 
 func (a *App) updateDeviceIP(newIP, mask, gateway, port string, dhcp bool, password string) {
@@ -480,16 +486,18 @@ func (a *App) rebootDevice() {
 
 	passwordEntry := widget.NewPasswordEntry()
 
-	form := &widget.Form{
-		Items: []*widget.FormItem{
-			{Text: "Password:", Widget: passwordEntry},
-		},
-		OnSubmit: func() {
-			a.sendRebootCommand(passwordEntry.Text)
-		},
+	items := []*widget.FormItem{
+		{Text: "Password:", Widget: passwordEntry},
 	}
 
-	dialog.ShowForm("Reboot Device", "Reboot", "Cancel", form.Items, form.OnSubmit, a.window)
+	onSubmit := func(b bool) {
+		if !b {
+			return
+		}
+		a.sendRebootCommand(passwordEntry.Text)
+	}
+
+	dialog.ShowForm("Reboot Device", "Reboot", "Cancel", items, onSubmit, a.window)
 }
 
 func (a *App) sendRebootCommand(password string) {
