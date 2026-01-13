@@ -62,6 +62,9 @@ jobs:
       - name: Build release binaries
         run: make release
 
+      - name: Build release binaries
+        run: make release-gui
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
