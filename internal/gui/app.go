@@ -346,13 +346,13 @@ Boot Time:         %s
 		dev.DeviceSN,
 		dev.SoftwareVersion,
 		dev.CommandPort,
-		dev.HTTPPort,
+		dev.HttpPort,
 		status,
 		dev.IPv4Address,
 		dev.IPv4SubnetMask,
 		dev.IPv4Gateway,
 		dev.DHCP,
-		dev.UUID,
+		dev.Uuid,
 		dev.BootTime,
 	)
 
