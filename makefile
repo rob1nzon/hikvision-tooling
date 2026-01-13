@@ -11,7 +11,9 @@ PWD                 := $(shell pwd)
 # Project settings
 PROJECT             ?= sadp
 BINARY              := sadp
+BINARY_GUI          := sadp-gui
 MAIN_PATH           := ./cmd/sadp
+MAIN_PATH_GUI       := ./cmd/sadp-gui
 MODULE              := github.com/cameronnewman/hikvision-tooling
 
 #
@@ -79,3 +81,59 @@ check: fmt-check vet lint test ## Run all checks
 .PHONY: run
 run: build ## Build and run
 	./$(BUILD_DIR)/$(BINARY)
+
+.PHONY: build-gui
+build-gui: ## Build the GUI binary for current platform
+	@echo "+++ $(shell date) - Running 'go build' for GUI"
+
+ifeq ($(filter $(ENVIRONMENT),local docker),$(ENVIRONMENT))
+	@mkdir -p $(BUILD_DIR)
+	CGO_ENABLED=1 GOOS=$(GOOS) GOARCH=$(GOARCH) $(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_GUI) $(MAIN_PATH_GUI)
+else
+	@mkdir -p $(BUILD_DIR)
+	DOCKER_BUILDKIT=1 \
+	$(DOCKER) run --rm \
+	-v $(PWD):/usr/src/app \
+	-w /usr/src/app \
+	--entrypoint=bash \
+	$(GOLANG_BUILD_IMAGE) \
+	-c "apt-get update && apt-get install -y libgl1-mesa-dev xorg-dev && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildvcs=false $(GOFLAGS) -ldflags '-s -w -X main.Version=$(VERSION) -X main.Commit=$(VERSION_HASH)' -o $(BUILD_DIR)/$(BINARY_GUI) $(MAIN_PATH_GUI)"
+endif
+
+	@echo "$(shell date) - Completed 'go build' for GUI: $(BUILD_DIR)/$(BINARY_GUI)"
+
+.PHONY: release-gui
+release-gui: ## Build GUI for Windows and Linux
+	@echo "+++ $(shell date) - Building GUI release binaries for Windows and Linux..."
+
+ifeq ($(filter $(ENVIRONMENT),local docker),$(ENVIRONMENT))
+	@mkdir -p $(BUILD_DIR)
+	@echo "Building Linux amd64..."
+	@CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_GUI)-linux-amd64 $(MAIN_PATH_GUI)
+	@echo "Building Windows amd64..."
+	@CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc $(GO) build $(GOFLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_GUI)-windows-amd64.exe $(MAIN_PATH_GUI)
+else
+	@mkdir -p $(BUILD_DIR)
+	@echo "Building Linux amd64..."
+	DOCKER_BUILDKIT=1 \
+	$(DOCKER) run --rm \
+	-v $(PWD):/usr/src/app \
+	-w /usr/src/app \
+	--entrypoint=bash \
+	$(GOLANG_BUILD_IMAGE) \
+	-c "apt-get update && apt-get install -y libgl1-mesa-dev xorg-dev && CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -buildvcs=false -ldflags '-s -w -X main.Version=$(VERSION) -X main.Commit=$(VERSION_HASH)' -o $(BUILD_DIR)/$(BINARY_GUI)-linux-amd64 $(MAIN_PATH_GUI)"
+	@echo "Building Windows amd64..."
+	DOCKER_BUILDKIT=1 \
+	$(DOCKER) run --rm \
+	-v $(PWD):/usr/src/app \
+	-w /usr/src/app \
+	--entrypoint=bash \
+	$(GOLANG_BUILD_IMAGE) \
+	-c "apt-get update && apt-get install -y gcc-mingw-w64-x86-64 libgl1-mesa-dev xorg-dev && CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -buildvcs=false -ldflags '-s -w -X main.Version=$(VERSION) -X main.Commit=$(VERSION_HASH) -H windowsgui' -o $(BUILD_DIR)/$(BINARY_GUI)-windows-amd64.exe $(MAIN_PATH_GUI)"
+endif
+
+	@echo "$(shell date) - Completed GUI release builds in $(BUILD_DIR)/"
+
+.PHONY: run-gui
+run-gui: build-gui ## Build and run GUI
+	./$(BUILD_DIR)/$(BINARY_GUI)
