@@ -23,15 +23,15 @@ import (
 
 // App represents the GUI application
 type App struct {
-	app      fyne.App
-	window   fyne.Window
-	config   *config.Config
-	logger   *logger.Logger
-	devices  []*sadp.Device
-	scanner  *sadp.Scanner
-	deviceList *widget.List
-	statusLabel *widget.Label
-	detailsText *widget.Label
+	app            fyne.App
+	window         fyne.Window
+	config         *config.Config
+	logger         *logger.Logger
+	devices        []*sadp.Device
+	scanner        *sadp.Scanner
+	deviceList     *widget.List
+	statusLabel    *widget.Label
+	detailsText    *widget.Label
 	selectedDevice *sadp.Device
 }
 
@@ -150,11 +150,11 @@ func (a *App) createDeviceList() *fyne.Container {
 			if id < len(a.devices) {
 				dev := a.devices[id]
 				box := item.(*fyne.Container)
-				
+
 				ipLabel := box.Objects[0].(*widget.Label)
 				ipLabel.SetText(fmt.Sprintf("%s - %s", dev.IPv4Address, dev.DeviceType))
 				ipLabel.TextStyle = fyne.TextStyle{Bold: true}
-				
+
 				infoLabel := box.Objects[1].(*widget.Label)
 				status := "Inactive"
 				if dev.Activated == "true" {
@@ -183,7 +183,7 @@ func (a *App) createDeviceList() *fyne.Container {
 
 func (a *App) createDetailsPanel() *fyne.Container {
 	title := widget.NewLabelWithStyle("Device Details", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	
+
 	a.detailsText = widget.NewLabel("Select a device to view details")
 	a.detailsText.Wrapping = fyne.TextWrapWord
 
@@ -294,7 +294,7 @@ func (a *App) scanARP(cidr string) {
 		}
 
 		a.statusLabel.SetText(fmt.Sprintf("Found %d Hikvision device(s) via ARP", len(foundDevices)))
-		
+
 		if len(foundDevices) > 0 {
 			msg := "Found devices:\n\n" + strings.Join(foundDevices, "\n")
 			dialog.ShowInformation("ARP Scan Results", msg, a.window)
